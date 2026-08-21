@@ -37,6 +37,22 @@ def write_html_report(assessment: Dict[str, Any], path: Path) -> Path:
 
     for finding in findings:
         data = finding.to_dict()
+
+        compliance_items = []
+
+        for mapping in data.get("compliance", []):
+            compliance_items.append(
+                f"{html.escape(mapping['framework'])}: "
+                f"{html.escape(mapping['control_id'])} "
+                f"({html.escape(mapping['relationship'])})"
+            )
+
+        compliance_text = (
+            "<br>".join(compliance_items)
+            if compliance_items
+            else "—"
+        )
+
         rows.append(
             "<tr>"
             f"<td>{html.escape(data['id'])}</td>"
@@ -44,12 +60,13 @@ def write_html_report(assessment: Dict[str, Any], path: Path) -> Path:
             f"<td>{html.escape(data['service'])}</td>"
             f"<td>{html.escape(data['resource'])}</td>"
             f"<td>{html.escape(data['title'])}</td>"
+            f"<td>{compliance_text}</td>"
             f"<td>{html.escape(data['recommendation'])}</td>"
             "</tr>"
         )
 
     if not rows:
-        rows.append("<tr><td colspan=\"6\">No security findings detected.</td></tr>")
+        rows.append("<tr><td colspan=\"7\">No security findings detected.</td></tr>")
 
     content = """<!doctype html>
 <html lang="en">
@@ -138,6 +155,7 @@ th { background: #f3f3f3; }
 <th>Service</th>
 <th>Resource</th>
 <th>Finding</th>
+<th>Compliance</th>
 <th>Recommendation</th>
 </tr>
 </thead>

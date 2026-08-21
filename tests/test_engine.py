@@ -53,6 +53,43 @@ class TestFindingModel(unittest.TestCase):
             )
 
 
+    def test_known_finding_gets_compliance_mapping(self):
+        finding = make_finding(
+            finding_id="ASP-IAM-001",
+        )
+
+        self.assertEqual(
+            finding.compliance[0]["control_id"],
+            "IAM.4",
+        )
+        self.assertEqual(
+            finding.compliance[0]["relationship"],
+            "DIRECT",
+        )
+
+    def test_unknown_finding_has_empty_compliance(self):
+        finding = make_finding(
+            finding_id="ASP-TEST-001",
+        )
+
+        self.assertEqual(
+            finding.compliance,
+            [],
+        )
+
+    def test_compliance_serialized(self):
+        finding = make_finding(
+            finding_id="ASP-S3-003",
+        )
+
+        document = finding.to_dict()
+
+        self.assertEqual(
+            document["compliance"][0]["control_id"],
+            "S3.14",
+        )
+
+
 class TestRiskEngine(unittest.TestCase):
 
     def test_zero_findings_pass(self):

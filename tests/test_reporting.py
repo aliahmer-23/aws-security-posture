@@ -46,6 +46,32 @@ class TestJSONReporting(unittest.TestCase):
             self.assertIn("risk", document)
             self.assertEqual(document["risk"]["total"], 1)
 
+    def test_json_contains_compliance_metadata(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "report.json"
+            write_json_report(self.assessment, path)
+
+            document = json.loads(
+                path.read_text(encoding="utf-8")
+            )
+
+            compliance = document["findings"][0][
+                "compliance"
+            ]
+
+            self.assertEqual(
+                compliance[0]["framework"],
+                "AWS Security Hub CSPM",
+            )
+            self.assertEqual(
+                compliance[0]["control_id"],
+                "IAM.4",
+            )
+            self.assertEqual(
+                compliance[0]["relationship"],
+                "DIRECT",
+            )
+
     def test_json_report_serializes_findings(self):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "report.json"
@@ -97,6 +123,23 @@ class TestHTMLReporting(unittest.TestCase):
             write_html_report(self.assessment, path)
             text = path.read_text(encoding="utf-8")
             self.assertIn("AWS Security Posture Scanner", text)
+
+    def test_html_contains_compliance_metadata(self):
+        from reporting.reports import write_html_report
+
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "report.html"
+            write_html_report(self.assessment, path)
+
+            text = path.read_text(encoding="utf-8")
+
+            self.assertIn("Compliance", text)
+            self.assertIn(
+                "AWS Security Hub CSPM",
+                text,
+            )
+            self.assertIn("IAM.4", text)
+            self.assertIn("DIRECT", text)
 
     def test_html_contains_finding(self):
         from reporting.reports import write_html_report
