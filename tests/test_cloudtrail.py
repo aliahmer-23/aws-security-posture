@@ -103,5 +103,75 @@ class TestCloudTrailSecurity(unittest.TestCase):
             )
 
 
+class TestCloudTrailCollectionErrors(unittest.TestCase):
+
+    def test_logging_access_denied_does_not_create_false_finding(self):
+        trail = {
+            "Name": "security-trail",
+            "IsLogging": None,
+            "LogFileValidationEnabled": True,
+            "MultiRegionTrail": True,
+            "collection_errors": [
+                {
+                    "operation": "get_trail_status",
+                    "code": "AccessDeniedException",
+                }
+            ],
+        }
+
+        findings = analyze_cloudtrail([trail])
+
+        ids = {
+            finding.id
+            for finding in findings
+        }
+
+        self.assertNotIn(
+            "ASP-CT-002",
+            ids,
+        )
+
+    def test_explicit_disabled_logging_still_detected(self):
+        trail = {
+            "Name": "disabled-trail",
+            "IsLogging": False,
+            "LogFileValidationEnabled": True,
+            "MultiRegionTrail": True,
+            "collection_errors": [],
+        }
+
+        findings = analyze_cloudtrail([trail])
+
+        ids = {
+            finding.id
+            for finding in findings
+        }
+
+        self.assertIn(
+            "ASP-CT-002",
+            ids,
+        )
+
+    def test_unknown_logging_status_without_error_not_false_positive(self):
+        trail = {
+            "Name": "unknown-trail",
+            "IsLogging": None,
+            "LogFileValidationEnabled": True,
+            "MultiRegionTrail": True,
+        }
+
+        findings = analyze_cloudtrail([trail])
+
+        ids = {
+            finding.id
+            for finding in findings
+        }
+
+        self.assertNotIn(
+            "ASP-CT-002",
+            ids,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

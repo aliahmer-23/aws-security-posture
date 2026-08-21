@@ -41,7 +41,20 @@ def analyze_cloudtrail(
 
         resource = f"cloudtrail:{name}"
 
-        if not trail.get("IsLogging", False):
+        collection_errors = trail.get(
+            "collection_errors",
+            [],
+        )
+
+        logging_collection_failed = any(
+            error.get("operation") == "get_trail_status"
+            for error in collection_errors
+        )
+
+        if (
+            not logging_collection_failed
+            and trail.get("IsLogging") is False
+        ):
             findings.append(
                 Finding(
                     id="ASP-CT-002",
