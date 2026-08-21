@@ -555,3 +555,52 @@ class TestKMSCollection(unittest.TestCase):
             ][0]["code"],
             "AccessDenied",
         )
+
+
+class TestVPCCollection(unittest.TestCase):
+
+    def test_vpc_security_collected(self):
+        ec2 = MagicMock()
+
+        ec2.describe_vpcs.return_value = {
+            "Vpcs": [
+                {
+                    "VpcId": "vpc-123",
+                }
+            ]
+        }
+
+        ec2.describe_flow_logs.return_value = {
+            "FlowLogs": [
+                {
+                    "ResourceId": "vpc-123",
+                }
+            ]
+        }
+
+        ec2.describe_security_groups.return_value = {
+            "SecurityGroups": [
+                {
+                    "GroupId": "sg-default",
+                    "VpcId": "vpc-123",
+                    "IpPermissions": [],
+                    "IpPermissionsEgress": [],
+                }
+            ]
+        }
+
+        collector = AWSCollector({
+            "ec2": ec2,
+        })
+
+        result = collector.collect_vpc_security()
+
+        self.assertEqual(
+            result["Vpcs"][0]["VpcId"],
+            "vpc-123",
+        )
+
+        self.assertEqual(
+            result["CollectionErrors"],
+            [],
+        )

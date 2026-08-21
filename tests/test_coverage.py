@@ -37,7 +37,7 @@ class TestAssessmentCoverage(unittest.TestCase):
 
         self.assertEqual(
             coverage["complete"],
-            6,
+            7,
         )
 
         self.assertEqual(
@@ -233,7 +233,7 @@ class TestRDSCoverage(unittest.TestCase):
 
         self.assertEqual(
             coverage["services_assessed"],
-            6,
+            7,
         )
 
     def test_rds_collection_error_is_partial(self):
@@ -290,7 +290,7 @@ class TestKMSCoverage(unittest.TestCase):
         )
         self.assertEqual(
             coverage["services_assessed"],
-            6,
+            7,
         )
 
     def test_kms_collection_error_is_partial(self):
@@ -352,5 +352,65 @@ class TestKMSCoverage(unittest.TestCase):
 
         self.assertEqual(
             coverage["services"]["kms"]["status"],
+            "PARTIAL",
+        )
+
+
+class TestVPCCoverage(unittest.TestCase):
+
+    def test_vpc_complete_coverage(self):
+        environment = {
+            "iam": {
+                "collection_errors": [],
+            },
+            "s3": [],
+            "security_groups": [],
+            "cloudtrail": [],
+            "rds": [],
+            "kms": [],
+            "vpc": [],
+            "ec2_collection_errors": [],
+            "rds_collection_errors": [],
+            "kms_collection_errors": [],
+            "vpc_collection_errors": [],
+        }
+
+        coverage = calculate_coverage(
+            environment
+        )
+
+        self.assertEqual(
+            coverage["services"]["vpc"]["status"],
+            "COMPLETE",
+        )
+
+    def test_vpc_collection_error_is_partial(self):
+        environment = {
+            "iam": {
+                "collection_errors": [],
+            },
+            "s3": [],
+            "security_groups": [],
+            "cloudtrail": [],
+            "rds": [],
+            "kms": [],
+            "vpc": [],
+            "ec2_collection_errors": [],
+            "rds_collection_errors": [],
+            "kms_collection_errors": [],
+            "vpc_collection_errors": [
+                {
+                    "operation": "describe_flow_logs",
+                    "code": "AccessDenied",
+                }
+            ],
+        }
+
+        coverage = calculate_coverage(
+            environment
+        )
+
+        self.assertEqual(
+            coverage["services"]["vpc"]["status"],
             "PARTIAL",
         )

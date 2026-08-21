@@ -9,6 +9,7 @@ from checks.iam import analyze_iam
 from checks.kms import analyze_kms
 from checks.rds import analyze_rds
 from checks.s3 import analyze_s3
+from checks.vpc import analyze_vpc
 
 
 def run_assessment(
@@ -67,6 +68,15 @@ def run_assessment(
         analyze_kms(
             environment.get(
                 "kms",
+                [],
+            )
+        )
+    )
+
+    findings.extend(
+        analyze_vpc(
+            environment.get(
+                "vpc",
                 [],
             )
         )

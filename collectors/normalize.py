@@ -203,6 +203,56 @@ def normalize_kms(
     return keys
 
 
+
+def normalize_vpc(
+    response: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    """Normalize VPC security posture data."""
+
+    flow_log_vpcs = {
+        item.get("ResourceId")
+        for item in response.get(
+            "FlowLogs",
+            [],
+        )
+        if item.get("ResourceId")
+    }
+
+    default_groups = {}
+
+    for group in response.get(
+        "DefaultSecurityGroups",
+        [],
+    ):
+        vpc_id = group.get("VpcId")
+
+        if vpc_id:
+            default_groups[vpc_id] = group
+
+    vpcs = []
+
+    for vpc in response.get(
+        "Vpcs",
+        [],
+    ):
+        vpc_id = vpc.get(
+            "VpcId",
+            "unknown",
+        )
+
+        vpcs.append({
+            "VpcId": vpc_id,
+            "FlowLogsEnabled": (
+                vpc_id in flow_log_vpcs
+            ),
+            "DefaultSecurityGroup": (
+                default_groups.get(vpc_id)
+            ),
+        })
+
+    return vpcs
+
+
 def normalize_environment(
     account_summary: Dict[str, Any],
     buckets: Dict[str, Any],
@@ -210,6 +260,7 @@ def normalize_environment(
     trails: Dict[str, Any],
     rds_instances: Dict[str, Any] = None,
     kms_keys: Dict[str, Any] = None,
+    vpc_security: Dict[str, Any] = None,
 ) -> Dict[str, Any]:
     """
     Build the normalized AWS environment document consumed
@@ -237,6 +288,13 @@ def normalize_environment(
         "kms": normalize_kms(
             kms_keys or {
                 "Keys": []
+            }
+        ),
+        "vpc": normalize_vpc(
+            vpc_security or {
+                "Vpcs": [],
+                "FlowLogs": [],
+                "DefaultSecurityGroups": [],
             }
         ),
     }

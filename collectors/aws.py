@@ -98,6 +98,99 @@ class AWSCollector:
         }
 
 
+    def collect_vpc_security(self) -> Dict[str, Any]:
+        """
+        Collect VPCs, VPC Flow Logs, and default security
+        groups using read-only EC2 APIs.
+
+        Collection failures are preserved separately so
+        incomplete AWS permissions cannot be interpreted as
+        a secure result.
+        """
+
+        ec2 = self._client("ec2")
+
+        vpcs = []
+        flow_logs = []
+        default_groups = []
+        errors = []
+
+        try:
+            response = ec2.describe_vpcs()
+            vpcs = response.get(
+                "Vpcs",
+                [],
+            )
+        except ClientError as exc:
+            error = exc.response.get(
+                "Error",
+                {},
+            )
+            errors.append({
+                "operation": "describe_vpcs",
+                "code": error.get(
+                    "Code",
+                    "Unknown",
+                ),
+            })
+
+        try:
+            response = ec2.describe_flow_logs()
+            flow_logs = response.get(
+                "FlowLogs",
+                [],
+            )
+        except ClientError as exc:
+            error = exc.response.get(
+                "Error",
+                {},
+            )
+            errors.append({
+                "operation": "describe_flow_logs",
+                "code": error.get(
+                    "Code",
+                    "Unknown",
+                ),
+            })
+
+        try:
+            response = ec2.describe_security_groups(
+                Filters=[
+                    {
+                        "Name": "group-name",
+                        "Values": ["default"],
+                    }
+                ]
+            )
+
+            default_groups = response.get(
+                "SecurityGroups",
+                [],
+            )
+
+        except ClientError as exc:
+            error = exc.response.get(
+                "Error",
+                {},
+            )
+            errors.append({
+                "operation": (
+                    "describe_security_groups_default"
+                ),
+                "code": error.get(
+                    "Code",
+                    "Unknown",
+                ),
+            })
+
+        return {
+            "Vpcs": vpcs,
+            "FlowLogs": flow_logs,
+            "DefaultSecurityGroups": default_groups,
+            "CollectionErrors": errors,
+        }
+
+
     def collect_rds_instances(self) -> Dict[str, Any]:
         """
         Collect RDS DB instances using the read-only

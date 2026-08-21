@@ -53,6 +53,14 @@ class TestLiveAssessment(unittest.TestCase):
             "SecurityGroups": []
         }
 
+        ec2.describe_vpcs.return_value = {
+            "Vpcs": []
+        }
+
+        ec2.describe_flow_logs.return_value = {
+            "FlowLogs": []
+        }
+
         cloudtrail.describe_trails.return_value = {
             "trailList": [
                 {
@@ -83,7 +91,21 @@ class TestLiveAssessment(unittest.TestCase):
 
         iam.get_account_summary.assert_called_once_with()
         s3.list_buckets.assert_called_once_with()
-        ec2.describe_security_groups.assert_called_once_with()
+        self.assertEqual(
+            ec2.describe_security_groups.call_count,
+            2,
+        )
+
+        ec2.describe_security_groups.assert_any_call()
+
+        ec2.describe_security_groups.assert_any_call(
+            Filters=[
+                {
+                    "Name": "group-name",
+                    "Values": ["default"],
+                }
+            ]
+        )
         rds.describe_db_instances.assert_called_once_with()
         kms.list_keys.assert_called_once_with()
 
@@ -136,6 +158,14 @@ class TestLiveAssessment(unittest.TestCase):
 
         ec2.describe_security_groups.return_value = {
             "SecurityGroups": []
+        }
+
+        ec2.describe_vpcs.return_value = {
+            "Vpcs": []
+        }
+
+        ec2.describe_flow_logs.return_value = {
+            "FlowLogs": []
         }
 
         cloudtrail.describe_trails.return_value = {

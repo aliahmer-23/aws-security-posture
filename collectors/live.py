@@ -31,6 +31,7 @@ def run_live_assessment(
     trails = collector.collect_trails()
     rds_instances = collector.collect_rds_instances()
     kms_keys = collector.collect_kms_keys()
+    vpc_security = collector.collect_vpc_security()
 
     environment = normalize_environment(
         account_summary=account_summary,
@@ -39,6 +40,7 @@ def run_live_assessment(
         trails=trails,
         rds_instances=rds_instances,
         kms_keys=kms_keys,
+        vpc_security=vpc_security,
     )
 
     environment["ec2_collection_errors"] = (
@@ -57,6 +59,13 @@ def run_live_assessment(
 
     environment["kms_collection_errors"] = (
         kms_keys.get(
+            "CollectionErrors",
+            [],
+        )
+    )
+
+    environment["vpc_collection_errors"] = (
+        vpc_security.get(
             "CollectionErrors",
             [],
         )

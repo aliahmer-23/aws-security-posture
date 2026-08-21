@@ -8,6 +8,7 @@ SERVICES = (
     "cloudtrail",
     "rds",
     "kms",
+    "vpc",
 )
 
 
@@ -66,6 +67,11 @@ def calculate_coverage(
         _errors_from_items(kms)
     )
 
+    vpc_errors = environment.get(
+        "vpc_collection_errors",
+        [],
+    )
+
     errors = {
         "iam": iam.get(
             "collection_errors",
@@ -78,6 +84,7 @@ def calculate_coverage(
         ),
         "rds": rds_errors,
         "kms": kms_errors,
+        "vpc": vpc_errors,
     }
 
     services = {}

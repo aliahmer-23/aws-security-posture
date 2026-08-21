@@ -153,6 +153,7 @@ class TestAWSNormalization(unittest.TestCase):
                 "cloudtrail",
                 "rds",
                 "kms",
+                "vpc",
             },
         )
 
@@ -239,4 +240,47 @@ class TestKMSNormalization(unittest.TestCase):
         self.assertEqual(
             result[0]["collection_errors"],
             [],
+        )
+
+
+class TestVPCNormalization(unittest.TestCase):
+
+    def test_vpc_security_normalized(self):
+        from collectors.normalize import normalize_vpc
+
+        result = normalize_vpc({
+            "Vpcs": [
+                {
+                    "VpcId": "vpc-123",
+                }
+            ],
+            "FlowLogs": [
+                {
+                    "ResourceId": "vpc-123",
+                }
+            ],
+            "DefaultSecurityGroups": [
+                {
+                    "VpcId": "vpc-123",
+                    "GroupId": "sg-default",
+                    "IpPermissions": [],
+                    "IpPermissionsEgress": [],
+                }
+            ],
+        })
+
+        self.assertEqual(
+            result[0]["VpcId"],
+            "vpc-123",
+        )
+
+        self.assertTrue(
+            result[0]["FlowLogsEnabled"]
+        )
+
+        self.assertEqual(
+            result[0][
+                "DefaultSecurityGroup"
+            ]["GroupId"],
+            "sg-default",
         )
