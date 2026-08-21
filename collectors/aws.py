@@ -1,5 +1,7 @@
 from typing import Any, Dict
 
+from botocore.exceptions import ClientError
+
 
 class AWSCollector:
     """
@@ -30,8 +32,70 @@ class AWSCollector:
         return s3.list_buckets()
 
     def collect_security_groups(self) -> Dict[str, Any]:
+        """
+        Collect all EC2 security groups using read-only
+        describe_security_groups() pagination.
+
+        Collection failures are recorded separately so an
+        AWS permission error is not treated as evidence that
+        the environment is secure or insecure.
+        """
+
         ec2 = self._client("ec2")
-        return ec2.describe_security_groups()
+
+        groups = []
+        next_token = None
+
+        try:
+            while True:
+                kwargs = {}
+
+                if next_token:
+                    kwargs["NextToken"] = next_token
+
+                response = ec2.describe_security_groups(
+                    **kwargs
+                )
+
+                groups.extend(
+                    response.get(
+                        "SecurityGroups",
+                        [],
+                    )
+                )
+
+                next_token = response.get(
+                    "NextToken"
+                )
+
+                if not next_token:
+                    break
+
+        except ClientError as exc:
+            error = exc.response.get(
+                "Error",
+                {},
+            )
+
+            return {
+                "SecurityGroups": groups,
+                "CollectionErrors": [
+                    {
+                        "operation": (
+                            "describe_security_groups"
+                        ),
+                        "code": error.get(
+                            "Code",
+                            "Unknown",
+                        ),
+                    }
+                ],
+            }
+
+        return {
+            "SecurityGroups": groups,
+            "CollectionErrors": [],
+        }
 
     def collect_trails(self) -> Dict[str, Any]:
         cloudtrail = self._client("cloudtrail")

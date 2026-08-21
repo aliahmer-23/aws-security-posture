@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import Mock
+from unittest.mock import MagicMock
 
 from collectors.aws import AWSCollector
 
@@ -102,3 +103,180 @@ class TestAWSCollector(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestEC2Pagination(unittest.TestCase):
+
+    def test_security_group_pagination(self):
+        ec2 = MagicMock()
+
+        ec2.describe_security_groups.side_effect = [
+            {
+                "SecurityGroups": [
+                    {
+                        "GroupId": "sg-first",
+                        "IpPermissions": [],
+                    }
+                ],
+                "NextToken": "page-two",
+            },
+            {
+                "SecurityGroups": [
+                    {
+                        "GroupId": "sg-second",
+                        "IpPermissions": [],
+                    }
+                ],
+            },
+        ]
+
+        collector = AWSCollector(
+            {
+                "ec2": ec2,
+            }
+        )
+
+        result = collector.collect_security_groups()
+
+        self.assertEqual(
+            len(result["SecurityGroups"]),
+            2,
+        )
+
+        self.assertEqual(
+            result["SecurityGroups"][0]["GroupId"],
+            "sg-first",
+        )
+
+        self.assertEqual(
+            result["SecurityGroups"][1]["GroupId"],
+            "sg-second",
+        )
+
+        self.assertEqual(
+            ec2.describe_security_groups.call_count,
+            2,
+        )
+
+        ec2.describe_security_groups.assert_any_call()
+
+        ec2.describe_security_groups.assert_any_call(
+            NextToken="page-two"
+        )
+
+
+class TestEC2CollectionErrors(unittest.TestCase):
+
+    def test_access_denied_is_recorded(self):
+        from botocore.exceptions import ClientError
+
+        ec2 = MagicMock()
+
+        ec2.describe_security_groups.side_effect = (
+            ClientError(
+                {
+                    "Error": {
+                        "Code": "AccessDenied",
+                        "Message": "Denied",
+                    }
+                },
+                "DescribeSecurityGroups",
+            )
+        )
+
+        collector = AWSCollector(
+            {
+                "ec2": ec2,
+            }
+        )
+
+        result = collector.collect_security_groups()
+
+        self.assertEqual(
+            result["SecurityGroups"],
+            [],
+        )
+
+        self.assertEqual(
+            len(result["CollectionErrors"]),
+            1,
+        )
+
+        self.assertEqual(
+            result["CollectionErrors"][0]["operation"],
+            "describe_security_groups",
+        )
+
+        self.assertEqual(
+            result["CollectionErrors"][0]["code"],
+            "AccessDenied",
+        )
+
+    def test_success_has_no_collection_errors(self):
+        ec2 = MagicMock()
+
+        ec2.describe_security_groups.return_value = {
+            "SecurityGroups": [],
+        }
+
+        collector = AWSCollector(
+            {
+                "ec2": ec2,
+            }
+        )
+
+        result = collector.collect_security_groups()
+
+        self.assertEqual(
+            result["CollectionErrors"],
+            [],
+        )
+
+    def test_partial_pagination_failure_preserves_data(self):
+        from botocore.exceptions import ClientError
+
+        ec2 = MagicMock()
+
+        ec2.describe_security_groups.side_effect = [
+            {
+                "SecurityGroups": [
+                    {
+                        "GroupId": "sg-first",
+                        "IpPermissions": [],
+                    }
+                ],
+                "NextToken": "page-two",
+            },
+            ClientError(
+                {
+                    "Error": {
+                        "Code": "AccessDenied",
+                        "Message": "Denied",
+                    }
+                },
+                "DescribeSecurityGroups",
+            ),
+        ]
+
+        collector = AWSCollector(
+            {
+                "ec2": ec2,
+            }
+        )
+
+        result = collector.collect_security_groups()
+
+        self.assertEqual(
+            len(result["SecurityGroups"]),
+            1,
+        )
+
+        self.assertEqual(
+            result["SecurityGroups"][0]["GroupId"],
+            "sg-first",
+        )
+
+        self.assertEqual(
+            result["CollectionErrors"][0]["code"],
+            "AccessDenied",
+        )
