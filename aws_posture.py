@@ -79,6 +79,8 @@ def print_coverage(coverage):
         "cloudtrail": "CloudTrail",
         "rds": "RDS",
         "kms": "KMS",
+        "vpc": "VPC",
+        "lambda": "Lambda",
     }
 
     for service, label in labels.items():

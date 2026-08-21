@@ -154,6 +154,7 @@ class TestAWSNormalization(unittest.TestCase):
                 "rds",
                 "kms",
                 "vpc",
+            "lambda",
             },
         )
 

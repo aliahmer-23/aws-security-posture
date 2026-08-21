@@ -604,3 +604,38 @@ class TestVPCCollection(unittest.TestCase):
             result["CollectionErrors"],
             [],
         )
+
+
+class TestLambdaCollection(unittest.TestCase):
+
+    def test_lambda_functions_collected(self):
+        lambda_client = MagicMock()
+
+        lambda_client.list_functions.return_value = {
+            "Functions": [
+                {
+                    "FunctionName": "security-function",
+                }
+            ]
+        }
+
+        lambda_client.get_function_configuration.return_value = {
+            "FunctionName": "security-function",
+            "TracingConfig": {"Mode": "Active"},
+        }
+
+        collector = AWSCollector(
+            {"lambda": lambda_client}
+        )
+
+        result = collector.collect_lambda_functions()
+
+        self.assertEqual(
+            len(result["Functions"]),
+            1,
+        )
+
+        self.assertEqual(
+            result["CollectionErrors"],
+            [],
+        )

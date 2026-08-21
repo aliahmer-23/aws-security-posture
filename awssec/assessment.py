@@ -7,6 +7,7 @@ from checks.cloudtrail import analyze_cloudtrail
 from checks.ec2 import analyze_security_groups
 from checks.iam import analyze_iam
 from checks.kms import analyze_kms
+from checks.lambda_security import analyze_lambda
 from checks.rds import analyze_rds
 from checks.s3 import analyze_s3
 from checks.vpc import analyze_vpc
@@ -77,6 +78,15 @@ def run_assessment(
         analyze_vpc(
             environment.get(
                 "vpc",
+                [],
+            )
+        )
+    )
+
+    findings.extend(
+        analyze_lambda(
+            environment.get(
+                "lambda",
                 [],
             )
         )

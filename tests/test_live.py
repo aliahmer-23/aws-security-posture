@@ -17,6 +17,7 @@ class TestLiveAssessment(unittest.TestCase):
         cloudtrail = MagicMock()
         rds = MagicMock()
         kms = MagicMock()
+        lambda_client = MagicMock()
 
         create_clients.return_value = {
             "iam": iam,
@@ -25,6 +26,7 @@ class TestLiveAssessment(unittest.TestCase):
             "cloudtrail": cloudtrail,
             "rds": rds,
             "kms": kms,
+            "lambda": lambda_client,
         }
 
         iam.list_users.return_value = {
@@ -80,6 +82,10 @@ class TestLiveAssessment(unittest.TestCase):
             "Truncated": False,
         }
 
+        lambda_client.list_functions.return_value = {
+            "Functions": [],
+        }
+
         result = run_live_assessment(
             region="us-east-1"
         )
@@ -127,6 +133,7 @@ class TestLiveAssessment(unittest.TestCase):
         cloudtrail = MagicMock()
         rds = MagicMock()
         kms = MagicMock()
+        lambda_client = MagicMock()
 
         create_clients.return_value = {
             "iam": iam,
@@ -135,6 +142,7 @@ class TestLiveAssessment(unittest.TestCase):
             "cloudtrail": cloudtrail,
             "rds": rds,
             "kms": kms,
+            "lambda": lambda_client,
         }
 
         iam.list_users.return_value = {
@@ -179,6 +187,10 @@ class TestLiveAssessment(unittest.TestCase):
         kms.list_keys.return_value = {
             "Keys": [],
             "Truncated": False,
+        }
+
+        lambda_client.list_functions.return_value = {
+            "Functions": [],
         }
 
         run_live_assessment(

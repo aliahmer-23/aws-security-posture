@@ -9,6 +9,7 @@ SERVICES = (
     "rds",
     "kms",
     "vpc",
+    "lambda",
 )
 
 
@@ -72,6 +73,24 @@ def calculate_coverage(
         [],
     )
 
+    lambda_items = environment.get(
+        "lambda",
+        [],
+    )
+
+    lambda_errors = list(
+        environment.get(
+            "lambda_collection_errors",
+            [],
+        )
+    )
+
+    lambda_errors.extend(
+        _errors_from_items(
+            lambda_items
+        )
+    )
+
     errors = {
         "iam": iam.get(
             "collection_errors",
@@ -85,6 +104,7 @@ def calculate_coverage(
         "rds": rds_errors,
         "kms": kms_errors,
         "vpc": vpc_errors,
+        "lambda": lambda_errors,
     }
 
     services = {}

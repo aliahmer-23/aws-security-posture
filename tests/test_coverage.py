@@ -37,7 +37,7 @@ class TestAssessmentCoverage(unittest.TestCase):
 
         self.assertEqual(
             coverage["complete"],
-            7,
+            8,
         )
 
         self.assertEqual(
@@ -233,7 +233,7 @@ class TestRDSCoverage(unittest.TestCase):
 
         self.assertEqual(
             coverage["services_assessed"],
-            7,
+            8,
         )
 
     def test_rds_collection_error_is_partial(self):
@@ -290,7 +290,7 @@ class TestKMSCoverage(unittest.TestCase):
         )
         self.assertEqual(
             coverage["services_assessed"],
-            7,
+            8,
         )
 
     def test_kms_collection_error_is_partial(self):
@@ -412,5 +412,66 @@ class TestVPCCoverage(unittest.TestCase):
 
         self.assertEqual(
             coverage["services"]["vpc"]["status"],
+            "PARTIAL",
+        )
+
+
+class TestLambdaCoverage(unittest.TestCase):
+
+    def test_lambda_complete_coverage(self):
+        environment = {
+            "iam": {"collection_errors": []},
+            "s3": [],
+            "security_groups": [],
+            "ec2_collection_errors": [],
+            "cloudtrail": [],
+            "rds": [],
+            "rds_collection_errors": [],
+            "kms": [],
+            "kms_collection_errors": [],
+            "vpc": [],
+            "vpc_collection_errors": [],
+            "lambda": [],
+            "lambda_collection_errors": [],
+        }
+
+        coverage = calculate_coverage(environment)
+
+        self.assertEqual(
+            coverage["services"]["lambda"]["status"],
+            "COMPLETE",
+        )
+
+        self.assertEqual(
+            coverage["services_assessed"],
+            8,
+        )
+
+    def test_lambda_collection_error_is_partial(self):
+        environment = {
+            "iam": {"collection_errors": []},
+            "s3": [],
+            "security_groups": [],
+            "ec2_collection_errors": [],
+            "cloudtrail": [],
+            "rds": [],
+            "rds_collection_errors": [],
+            "kms": [],
+            "kms_collection_errors": [],
+            "vpc": [],
+            "vpc_collection_errors": [],
+            "lambda": [],
+            "lambda_collection_errors": [
+                {
+                    "operation": "list_functions",
+                    "code": "AccessDenied",
+                }
+            ],
+        }
+
+        coverage = calculate_coverage(environment)
+
+        self.assertEqual(
+            coverage["services"]["lambda"]["status"],
             "PARTIAL",
         )

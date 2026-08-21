@@ -406,6 +406,100 @@ class AWSCollector:
             "CollectionErrors": errors,
         }
 
+    def collect_lambda_functions(self) -> Dict[str, Any]:
+        """
+        Collect AWS Lambda function security configuration
+        using read-only Lambda APIs.
+
+        Collection failures are preserved separately so
+        incomplete permissions cannot be interpreted as a
+        secure assessment result.
+        """
+
+        lambda_client = self._client("lambda")
+
+        functions = []
+        errors = []
+        marker = None
+
+        try:
+            while True:
+                kwargs = {}
+
+                if marker:
+                    kwargs["Marker"] = marker
+
+                response = lambda_client.list_functions(
+                    **kwargs
+                )
+
+                for function in response.get(
+                    "Functions",
+                    [],
+                ):
+                    name = function.get("FunctionName")
+
+                    record = dict(function)
+                    record["CollectionErrors"] = []
+
+                    if name:
+                        try:
+                            config = (
+                                lambda_client.get_function_configuration(
+                                    FunctionName=name
+                                )
+                            )
+                            record.update(config)
+
+                        except ClientError as exc:
+                            error = exc.response.get(
+                                "Error",
+                                {},
+                            )
+
+                            record[
+                                "CollectionErrors"
+                            ].append(
+                                {
+                                    "operation": (
+                                        "get_function_configuration"
+                                    ),
+                                    "code": error.get(
+                                        "Code",
+                                        "Unknown",
+                                    ),
+                                }
+                            )
+
+                    functions.append(record)
+
+                marker = response.get("NextMarker")
+
+                if not marker:
+                    break
+
+        except ClientError as exc:
+            error = exc.response.get(
+                "Error",
+                {},
+            )
+
+            errors.append(
+                {
+                    "operation": "list_functions",
+                    "code": error.get(
+                        "Code",
+                        "Unknown",
+                    ),
+                }
+            )
+
+        return {
+            "Functions": functions,
+            "CollectionErrors": errors,
+        }
+
+
     def collect_trails(self) -> Dict[str, Any]:
         cloudtrail = self._client("cloudtrail")
         return cloudtrail.describe_trails(

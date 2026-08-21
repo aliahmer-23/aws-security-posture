@@ -142,6 +142,7 @@ th { background: #f3f3f3; }
         "cloudtrail",
         "rds",
         "kms",
+        "lambda",
     ):
         status = services[service]["status"]
 

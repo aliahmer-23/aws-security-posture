@@ -8,6 +8,7 @@ AWS_SERVICES = (
     "cloudtrail",
     "rds",
     "kms",
+    "lambda",
 )
 
 

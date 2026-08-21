@@ -253,6 +253,79 @@ def normalize_vpc(
     return vpcs
 
 
+def normalize_lambda(
+    response: Dict[str, Any],
+):
+    """Normalize Lambda security properties."""
+
+    normalized = []
+
+    for function in response.get(
+        "Functions",
+        [],
+    ):
+        tracing = function.get(
+            "TracingConfig",
+            {},
+        )
+
+        vpc = function.get(
+            "VpcConfig",
+            {},
+        )
+
+        environment = function.get(
+            "Environment",
+            {},
+        )
+
+        dead_letter = function.get(
+            "DeadLetterConfig",
+            {},
+        )
+
+        normalized.append(
+            {
+                "name": function.get(
+                    "FunctionName",
+                    "unknown",
+                ),
+                "tracing_mode": tracing.get(
+                    "Mode"
+                ),
+                "vpc_configured": (
+                    bool(vpc.get("VpcId"))
+                    if "VpcId" in vpc
+                    else None
+                ),
+                "kms_key_arn": function.get(
+                    "KMSKeyArn"
+                ),
+                "environment_variables_present": (
+                    bool(
+                        environment.get(
+                            "Variables",
+                            {}
+                        )
+                    )
+                    if "Environment" in function
+                    else None
+                ),
+                "dead_letter_target_arn": (
+                    dead_letter.get(
+                        "TargetArn"
+                    )
+                ),
+                "collection_errors": function.get(
+                    "CollectionErrors",
+                    [],
+                ),
+            }
+        )
+
+    return normalized
+
+
 def normalize_environment(
     account_summary: Dict[str, Any],
     buckets: Dict[str, Any],
@@ -261,6 +334,7 @@ def normalize_environment(
     rds_instances: Dict[str, Any] = None,
     kms_keys: Dict[str, Any] = None,
     vpc_security: Dict[str, Any] = None,
+    lambda_functions: Dict[str, Any] = None,
 ) -> Dict[str, Any]:
     """
     Build the normalized AWS environment document consumed
@@ -295,6 +369,11 @@ def normalize_environment(
                 "Vpcs": [],
                 "FlowLogs": [],
                 "DefaultSecurityGroups": [],
+            }
+        ),
+        "lambda": normalize_lambda(
+            lambda_functions or {
+                "Functions": [],
             }
         ),
     }
