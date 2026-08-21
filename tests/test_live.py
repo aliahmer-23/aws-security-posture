@@ -15,12 +15,14 @@ class TestLiveAssessment(unittest.TestCase):
         s3 = MagicMock()
         ec2 = MagicMock()
         cloudtrail = MagicMock()
+        rds = MagicMock()
 
         create_clients.return_value = {
             "iam": iam,
             "s3": s3,
             "ec2": ec2,
             "cloudtrail": cloudtrail,
+            "rds": rds,
         }
 
         iam.list_users.return_value = {
@@ -59,6 +61,10 @@ class TestLiveAssessment(unittest.TestCase):
             ]
         }
 
+        rds.describe_db_instances.return_value = {
+            "DBInstances": []
+        }
+
         result = run_live_assessment(
             region="us-east-1"
         )
@@ -71,6 +77,7 @@ class TestLiveAssessment(unittest.TestCase):
         iam.get_account_summary.assert_called_once_with()
         s3.list_buckets.assert_called_once_with()
         ec2.describe_security_groups.assert_called_once_with()
+        rds.describe_db_instances.assert_called_once_with()
 
         cloudtrail.describe_trails.assert_called_once_with(
             includeShadowTrails=False
@@ -88,12 +95,14 @@ class TestLiveAssessment(unittest.TestCase):
         s3 = MagicMock()
         ec2 = MagicMock()
         cloudtrail = MagicMock()
+        rds = MagicMock()
 
         create_clients.return_value = {
             "iam": iam,
             "s3": s3,
             "ec2": ec2,
             "cloudtrail": cloudtrail,
+            "rds": rds,
         }
 
         iam.list_users.return_value = {
@@ -121,6 +130,10 @@ class TestLiveAssessment(unittest.TestCase):
 
         cloudtrail.describe_trails.return_value = {
             "trailList": []
+        }
+
+        rds.describe_db_instances.return_value = {
+            "DBInstances": []
         }
 
         run_live_assessment(

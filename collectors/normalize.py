@@ -116,11 +116,48 @@ def normalize_cloudtrail(
     return trails
 
 
+
+def normalize_rds(
+    response: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    """Normalize RDS DB instance security properties."""
+
+    instances = []
+
+    for instance in response.get(
+        "DBInstances",
+        [],
+    ):
+        instances.append(
+            {
+                "DBInstanceIdentifier": instance.get(
+                    "DBInstanceIdentifier",
+                    "unknown",
+                ),
+                "StorageEncrypted": instance.get(
+                    "StorageEncrypted"
+                ),
+                "PubliclyAccessible": instance.get(
+                    "PubliclyAccessible"
+                ),
+                "BackupRetentionPeriod": instance.get(
+                    "BackupRetentionPeriod"
+                ),
+                "DeletionProtection": instance.get(
+                    "DeletionProtection"
+                ),
+            }
+        )
+
+    return instances
+
+
 def normalize_environment(
     account_summary: Dict[str, Any],
     buckets: Dict[str, Any],
     security_groups: Dict[str, Any],
     trails: Dict[str, Any],
+    rds_instances: Dict[str, Any] = None,
 ) -> Dict[str, Any]:
     """
     Build the normalized AWS environment document consumed
@@ -139,5 +176,10 @@ def normalize_environment(
         ),
         "cloudtrail": normalize_cloudtrail(
             trails
+        ),
+        "rds": normalize_rds(
+            rds_instances or {
+                "DBInstances": []
+            }
         ),
     }

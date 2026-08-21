@@ -29,16 +29,25 @@ def run_live_assessment(
     bucket_inventory = collector.collect_s3_buckets()
     security_groups = collector.collect_security_groups()
     trails = collector.collect_trails()
+    rds_instances = collector.collect_rds_instances()
 
     environment = normalize_environment(
         account_summary=account_summary,
         buckets=bucket_inventory,
         security_groups=security_groups,
         trails=trails,
+        rds_instances=rds_instances,
     )
 
     environment["ec2_collection_errors"] = (
         security_groups.get(
+            "CollectionErrors",
+            [],
+        )
+    )
+
+    environment["rds_collection_errors"] = (
+        rds_instances.get(
             "CollectionErrors",
             [],
         )

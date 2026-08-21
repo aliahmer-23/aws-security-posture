@@ -97,6 +97,71 @@ class AWSCollector:
             "CollectionErrors": [],
         }
 
+
+    def collect_rds_instances(self) -> Dict[str, Any]:
+        """
+        Collect RDS DB instances using the read-only
+        describe_db_instances() API with pagination.
+
+        Collection errors are preserved separately so a
+        permission failure cannot be interpreted as a
+        secure assessment result.
+        """
+
+        rds = self._client("rds")
+
+        instances = []
+        marker = None
+
+        try:
+            while True:
+                kwargs = {}
+
+                if marker:
+                    kwargs["Marker"] = marker
+
+                response = rds.describe_db_instances(
+                    **kwargs
+                )
+
+                instances.extend(
+                    response.get(
+                        "DBInstances",
+                        [],
+                    )
+                )
+
+                marker = response.get("Marker")
+
+                if not marker:
+                    break
+
+        except ClientError as exc:
+            error = exc.response.get(
+                "Error",
+                {},
+            )
+
+            return {
+                "DBInstances": instances,
+                "CollectionErrors": [
+                    {
+                        "operation": (
+                            "describe_db_instances"
+                        ),
+                        "code": error.get(
+                            "Code",
+                            "Unknown",
+                        ),
+                    }
+                ],
+            }
+
+        return {
+            "DBInstances": instances,
+            "CollectionErrors": [],
+        }
+
     def collect_trails(self) -> Dict[str, Any]:
         cloudtrail = self._client("cloudtrail")
         return cloudtrail.describe_trails(

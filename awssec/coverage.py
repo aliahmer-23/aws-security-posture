@@ -6,6 +6,7 @@ SERVICES = (
     "s3",
     "ec2",
     "cloudtrail",
+    "rds",
 )
 
 
@@ -46,6 +47,10 @@ def calculate_coverage(
         "cloudtrail",
         [],
     )
+    rds_errors = environment.get(
+        "rds_collection_errors",
+        [],
+    )
 
     errors = {
         "iam": iam.get(
@@ -57,6 +62,7 @@ def calculate_coverage(
         "cloudtrail": _errors_from_items(
             cloudtrail
         ),
+        "rds": rds_errors,
     }
 
     services = {}

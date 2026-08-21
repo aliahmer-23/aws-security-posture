@@ -135,7 +135,13 @@ th { background: #f3f3f3; }
 <tbody>
 """
 
-    for service in ("iam", "s3", "ec2", "cloudtrail"):
+    for service in (
+        "iam",
+        "s3",
+        "ec2",
+        "cloudtrail",
+        "rds",
+    ):
         status = services[service]["status"]
 
         content += (

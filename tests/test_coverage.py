@@ -37,7 +37,7 @@ class TestAssessmentCoverage(unittest.TestCase):
 
         self.assertEqual(
             coverage["complete"],
-            4,
+            5,
         )
 
         self.assertEqual(
@@ -207,4 +207,60 @@ class TestCoverageIntegration(unittest.TestCase):
         self.assertEqual(
             serialized["coverage"]["confidence"],
             "COMPLETE",
+        )
+
+
+class TestRDSCoverage(unittest.TestCase):
+
+    def test_rds_complete_coverage(self):
+        environment = {
+            "iam": {
+                "collection_errors": [],
+            },
+            "s3": [],
+            "ec2_collection_errors": [],
+            "cloudtrail": [],
+            "rds": [],
+            "rds_collection_errors": [],
+        }
+
+        coverage = calculate_coverage(environment)
+
+        self.assertEqual(
+            coverage["services"]["rds"]["status"],
+            "COMPLETE",
+        )
+
+        self.assertEqual(
+            coverage["services_assessed"],
+            5,
+        )
+
+    def test_rds_collection_error_is_partial(self):
+        environment = {
+            "iam": {
+                "collection_errors": [],
+            },
+            "s3": [],
+            "ec2_collection_errors": [],
+            "cloudtrail": [],
+            "rds": [],
+            "rds_collection_errors": [
+                {
+                    "operation": "describe_db_instances",
+                    "code": "AccessDenied",
+                }
+            ],
+        }
+
+        coverage = calculate_coverage(environment)
+
+        self.assertEqual(
+            coverage["services"]["rds"]["status"],
+            "PARTIAL",
+        )
+
+        self.assertEqual(
+            coverage["confidence"],
+            "PARTIAL",
         )

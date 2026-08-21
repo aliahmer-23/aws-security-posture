@@ -280,3 +280,111 @@ class TestEC2CollectionErrors(unittest.TestCase):
             result["CollectionErrors"][0]["code"],
             "AccessDenied",
         )
+
+
+class TestRDSCollection(unittest.TestCase):
+
+    def test_rds_instances_collected(self):
+        rds = MagicMock()
+
+        rds.describe_db_instances.return_value = {
+            "DBInstances": [
+                {
+                    "DBInstanceIdentifier": "app-db",
+                }
+            ]
+        }
+
+        collector = AWSCollector(
+            {
+                "rds": rds,
+            }
+        )
+
+        result = collector.collect_rds_instances()
+
+        self.assertEqual(
+            result["DBInstances"][0][
+                "DBInstanceIdentifier"
+            ],
+            "app-db",
+        )
+
+        self.assertEqual(
+            result["CollectionErrors"],
+            [],
+        )
+
+    def test_rds_pagination(self):
+        rds = MagicMock()
+
+        rds.describe_db_instances.side_effect = [
+            {
+                "DBInstances": [
+                    {
+                        "DBInstanceIdentifier": "db-one",
+                    }
+                ],
+                "Marker": "page-two",
+            },
+            {
+                "DBInstances": [
+                    {
+                        "DBInstanceIdentifier": "db-two",
+                    }
+                ],
+            },
+        ]
+
+        collector = AWSCollector(
+            {
+                "rds": rds,
+            }
+        )
+
+        result = collector.collect_rds_instances()
+
+        self.assertEqual(
+            len(result["DBInstances"]),
+            2,
+        )
+
+        rds.describe_db_instances.assert_any_call()
+        rds.describe_db_instances.assert_any_call(
+            Marker="page-two"
+        )
+
+    def test_rds_access_denied_recorded(self):
+        from botocore.exceptions import ClientError
+
+        rds = MagicMock()
+
+        rds.describe_db_instances.side_effect = (
+            ClientError(
+                {
+                    "Error": {
+                        "Code": "AccessDenied",
+                        "Message": "Denied",
+                    }
+                },
+                "DescribeDBInstances",
+            )
+        )
+
+        collector = AWSCollector(
+            {
+                "rds": rds,
+            }
+        )
+
+        result = collector.collect_rds_instances()
+
+        self.assertEqual(
+            result["DBInstances"],
+            [],
+        )
+
+        self.assertEqual(
+            result["CollectionErrors"][0]["code"],
+            "AccessDenied",
+        )

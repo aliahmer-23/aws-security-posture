@@ -4,6 +4,7 @@ from collectors.normalize import (
     normalize_cloudtrail,
     normalize_environment,
     normalize_iam,
+    normalize_rds,
     normalize_s3,
     normalize_security_groups,
 )
@@ -149,9 +150,46 @@ class TestAWSNormalization(unittest.TestCase):
                 "s3",
                 "security_groups",
                 "cloudtrail",
+                "rds",
             },
         )
 
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestRDSNormalization(unittest.TestCase):
+
+    def test_rds_security_properties_normalized(self):
+        response = {
+            "DBInstances": [
+                {
+                    "DBInstanceIdentifier": "app-db",
+                    "StorageEncrypted": True,
+                    "PubliclyAccessible": False,
+                    "BackupRetentionPeriod": 7,
+                    "DeletionProtection": True,
+                }
+            ]
+        }
+
+        result = normalize_rds(response)
+
+        self.assertEqual(
+            result[0]["DBInstanceIdentifier"],
+            "app-db",
+        )
+        self.assertTrue(
+            result[0]["StorageEncrypted"]
+        )
+        self.assertFalse(
+            result[0]["PubliclyAccessible"]
+        )
+        self.assertEqual(
+            result[0]["BackupRetentionPeriod"],
+            7,
+        )
+        self.assertTrue(
+            result[0]["DeletionProtection"]
+        )
