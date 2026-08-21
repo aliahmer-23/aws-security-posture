@@ -23,6 +23,17 @@ class TestLiveAssessment(unittest.TestCase):
             "cloudtrail": cloudtrail,
         }
 
+        iam.list_users.return_value = {
+            "Users": [],
+            "IsTruncated": False,
+        }
+
+        iam.get_account_password_policy.return_value = {
+            "PasswordPolicy": {
+                "MinimumPasswordLength": 14,
+            }
+        }
+
         iam.get_account_summary.return_value = {
             "SummaryMap": {
                 "AccountAccessKeysPresent": 0,
@@ -83,6 +94,17 @@ class TestLiveAssessment(unittest.TestCase):
             "s3": s3,
             "ec2": ec2,
             "cloudtrail": cloudtrail,
+        }
+
+        iam.list_users.return_value = {
+            "Users": [],
+            "IsTruncated": False,
+        }
+
+        iam.get_account_password_policy.return_value = {
+            "PasswordPolicy": {
+                "MinimumPasswordLength": 14,
+            }
         }
 
         iam.get_account_summary.return_value = {

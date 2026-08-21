@@ -55,7 +55,14 @@ def analyze_iam(
             )
         )
 
-    if account.get("unused_access_keys", 0) > 0:
+    unused_access_keys = account.get(
+        "unused_access_keys"
+    )
+
+    if (
+        unused_access_keys is not None
+        and unused_access_keys > 0
+    ):
         findings.append(
             Finding(
                 id="ASP-IAM-003",
@@ -73,12 +80,19 @@ def analyze_iam(
                 ),
                 evidence={
                     "unused_access_keys":
-                        account.get("unused_access_keys"),
+                        unused_access_keys,
                 },
             )
         )
 
-    if account.get("admin_users", 0) > 1:
+    admin_users = account.get(
+        "admin_users"
+    )
+
+    if (
+        admin_users is not None
+        and admin_users > 1
+    ):
         findings.append(
             Finding(
                 id="ASP-IAM-004",
@@ -96,22 +110,26 @@ def analyze_iam(
                 ),
                 evidence={
                     "admin_users":
-                        account.get("admin_users"),
+                        admin_users,
                 },
             )
         )
 
     password_policy = account.get(
-        "password_policy",
-        {},
+        "password_policy"
     )
 
-    minimum_length = password_policy.get(
-        "minimum_length",
-        0,
-    )
+    minimum_length = None
 
-    if minimum_length < 14:
+    if password_policy is not None:
+        minimum_length = password_policy.get(
+            "minimum_length"
+        )
+
+    if (
+        minimum_length is not None
+        and minimum_length < 14
+    ):
         findings.append(
             Finding(
                 id="ASP-IAM-005",

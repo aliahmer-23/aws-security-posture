@@ -111,5 +111,89 @@ class TestIAMSecurity(unittest.TestCase):
             )
 
 
+class TestIAMCollectionErrors(unittest.TestCase):
+
+    def test_unknown_unused_keys_not_false_positive(self):
+        account = {
+            "root_access_keys": 0,
+            "root_mfa_enabled": True,
+            "unused_access_keys": None,
+            "admin_users": 1,
+            "password_policy": {
+                "minimum_length": 14,
+            },
+        }
+
+        ids = {
+            finding.id
+            for finding in analyze_iam(account)
+        }
+
+        self.assertNotIn(
+            "ASP-IAM-003",
+            ids,
+        )
+
+    def test_unknown_admin_users_not_false_positive(self):
+        account = {
+            "root_access_keys": 0,
+            "root_mfa_enabled": True,
+            "unused_access_keys": 0,
+            "admin_users": None,
+            "password_policy": {
+                "minimum_length": 14,
+            },
+        }
+
+        ids = {
+            finding.id
+            for finding in analyze_iam(account)
+        }
+
+        self.assertNotIn(
+            "ASP-IAM-004",
+            ids,
+        )
+
+    def test_unknown_password_policy_not_false_positive(self):
+        account = {
+            "root_access_keys": 0,
+            "root_mfa_enabled": True,
+            "unused_access_keys": 0,
+            "admin_users": 1,
+            "password_policy": None,
+        }
+
+        ids = {
+            finding.id
+            for finding in analyze_iam(account)
+        }
+
+        self.assertNotIn(
+            "ASP-IAM-005",
+            ids,
+        )
+
+    def test_known_insecure_values_still_detected(self):
+        account = {
+            "root_access_keys": 0,
+            "root_mfa_enabled": True,
+            "unused_access_keys": 2,
+            "admin_users": 3,
+            "password_policy": {
+                "minimum_length": 8,
+            },
+        }
+
+        ids = {
+            finding.id
+            for finding in analyze_iam(account)
+        }
+
+        self.assertIn("ASP-IAM-003", ids)
+        self.assertIn("ASP-IAM-004", ids)
+        self.assertIn("ASP-IAM-005", ids)
+
+
 if __name__ == "__main__":
     unittest.main()
