@@ -1,1 +1,1 @@
-# AWS SDK will be introduced when AWS integration begins.
+boto3>=1.34,<2.0
