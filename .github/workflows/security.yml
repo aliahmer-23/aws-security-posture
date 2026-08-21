@@ -1,0 +1,54 @@
+name: AWS Security Posture CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  security-validation:
+    name: Security Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Compile Python source
+        run: |
+          python -m py_compile \
+            aws_posture.py \
+            awssec/*.py \
+            collectors/*.py \
+            checks/*.py \
+            reporting/*.py \
+            tests/*.py
+
+      - name: Run automated tests
+        run: python -m unittest discover -s tests
+
+      - name: Validate secure fixture
+        run: python aws_posture.py --fixture fixtures/secure.json
+
+      - name: Validate insecure fixture detection
+        run: |
+          set +e
+          python aws_posture.py --fixture fixtures/insecure.json
+          status=$?
+          set -e
+
+          if [ "$status" -ne 1 ]; then
+            echo "Expected insecure fixture to return exit code 1."
+            exit 1
+          fi
+
+          echo "Insecure AWS configuration correctly detected."
