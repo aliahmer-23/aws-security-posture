@@ -69,6 +69,48 @@ COMPLIANCE_MAPPINGS: Dict[str, List[Dict[str, str]]] = {
             "relationship": PARTIAL,
         }
     ],
+    "ASP-RDS-001": [
+        {
+            "framework": "AWS Security Hub CSPM",
+            "control_id": "RDS.3",
+            "relationship": DIRECT,
+        }
+    ],
+    "ASP-RDS-002": [
+        {
+            "framework": "AWS Security Hub CSPM",
+            "control_id": "RDS.2",
+            "relationship": DIRECT,
+        }
+    ],
+    "ASP-RDS-003": [
+        {
+            "framework": "AWS Security Hub CSPM",
+            "control_id": "RDS.11",
+            "relationship": DIRECT,
+        }
+    ],
+    "ASP-RDS-004": [
+        {
+            "framework": "AWS Security Hub CSPM",
+            "control_id": "RDS.8",
+            "relationship": DIRECT,
+        }
+    ],
+    "ASP-KMS-002": [
+        {
+            "framework": "AWS Security Hub CSPM",
+            "control_id": "KMS.4",
+            "relationship": DIRECT,
+        }
+    ],
+    "ASP-LAMBDA-002": [
+        {
+            "framework": "AWS Security Hub CSPM",
+            "control_id": "Lambda.3",
+            "relationship": DIRECT,
+        }
+    ],
 }
 
 

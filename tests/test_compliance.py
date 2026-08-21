@@ -75,6 +75,61 @@ class TestComplianceMappings(unittest.TestCase):
             "IAM.4",
         )
 
+    def test_rds_compliance_mappings(self):
+        expected = {
+            "ASP-RDS-001": "RDS.3",
+            "ASP-RDS-002": "RDS.2",
+            "ASP-RDS-003": "RDS.11",
+            "ASP-RDS-004": "RDS.8",
+        }
+
+        for finding_id, control_id in expected.items():
+            mappings = get_compliance_mappings(finding_id)
+
+            self.assertEqual(len(mappings), 1)
+            self.assertEqual(
+                mappings[0]["framework"],
+                "AWS Security Hub CSPM",
+            )
+            self.assertEqual(
+                mappings[0]["control_id"],
+                control_id,
+            )
+            self.assertEqual(
+                mappings[0]["relationship"],
+                DIRECT,
+            )
+
+    def test_kms_compliance_mapping(self):
+        mappings = get_compliance_mappings(
+            "ASP-KMS-002"
+        )
+
+        self.assertEqual(len(mappings), 1)
+        self.assertEqual(
+            mappings[0]["control_id"],
+            "KMS.4",
+        )
+        self.assertEqual(
+            mappings[0]["relationship"],
+            DIRECT,
+        )
+
+    def test_lambda_compliance_mapping(self):
+        mappings = get_compliance_mappings(
+            "ASP-LAMBDA-002"
+        )
+
+        self.assertEqual(len(mappings), 1)
+        self.assertEqual(
+            mappings[0]["control_id"],
+            "Lambda.3",
+        )
+        self.assertEqual(
+            mappings[0]["relationship"],
+            DIRECT,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
