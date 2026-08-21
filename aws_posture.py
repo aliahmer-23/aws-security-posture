@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from awssec.assessment import run_assessment
+from collectors.live import run_live_assessment
 from reporting.reports import write_json_report, write_html_report
 from reporting.sarif import write_sarif
 
@@ -82,6 +83,22 @@ def main():
     )
 
     parser.add_argument(
+        "--live",
+        action="store_true",
+        help="Run a read-only assessment against AWS.",
+    )
+
+    parser.add_argument(
+        "--region",
+        help="AWS region used for live assessment.",
+    )
+
+    parser.add_argument(
+        "--profile",
+        help="Optional AWS CLI profile used for live assessment.",
+    )
+
+    parser.add_argument(
         "--version",
         action="version",
         version=f"AWS Security Posture Scanner {VERSION}",
@@ -89,22 +106,50 @@ def main():
 
     args = parser.parse_args()
 
-    if not args.fixture:
+    if args.fixture and args.live:
         parser.error(
-            "--fixture is required in offline mode."
+            "--fixture and --live cannot be used together."
+        )
+
+    if not args.fixture and not args.live:
+        parser.error(
+            "one assessment mode is required: --fixture or --live."
+        )
+
+    if not args.live and (args.region or args.profile):
+        parser.error(
+            "--region and --profile require --live."
         )
 
     try:
-        environment = load_fixture(args.fixture)
-        assessment = run_assessment(environment)
+        if args.live:
+            assessment = run_live_assessment(
+                region=args.region,
+                profile=args.profile,
+            )
+            source = args.profile or "AWS credential provider chain"
+            mode = "LIVE AWS / READ-ONLY"
+        else:
+            environment = load_fixture(args.fixture)
+            assessment = run_assessment(environment)
+            source = args.fixture
+            mode = "OFFLINE / LOCAL FIXTURE"
 
-    except (OSError, json.JSONDecodeError, ValueError) as exc:
+    except (
+        OSError,
+        json.JSONDecodeError,
+        ValueError,
+        RuntimeError,
+    ) as exc:
         print(f"[-] {exc}", file=sys.stderr)
         return 2
 
     print_banner()
-    print(f"[+] Assessment source: {args.fixture}")
-    print("[+] Mode: OFFLINE / LOCAL FIXTURE")
+    print(f"[+] Assessment source: {source}")
+    print(f"[+] Mode: {mode}")
+
+    if args.live and args.region:
+        print(f"[+] Region: {args.region}")
 
     print_findings(
         assessment["findings"]
