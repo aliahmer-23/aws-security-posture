@@ -1,0 +1,51 @@
+{
+  "iam": {
+    "root_access_keys": 0,
+    "root_mfa_enabled": true,
+    "unused_access_keys": 0,
+    "admin_users": 1,
+    "password_policy": {
+      "minimum_length": 14
+    }
+  },
+  "s3": [
+    {
+      "name": "secure-data",
+      "public_access_block": {
+        "BlockPublicAcls": true,
+        "IgnorePublicAcls": true,
+        "BlockPublicPolicy": true,
+        "RestrictPublicBuckets": true
+      },
+      "encryption": {
+        "algorithm": "AES256"
+      },
+      "versioning": "Enabled"
+    }
+  ],
+  "security_groups": [
+    {
+      "GroupId": "sg-secure",
+      "IpPermissions": [
+        {
+          "IpProtocol": "tcp",
+          "FromPort": 443,
+          "ToPort": 443,
+          "IpRanges": [
+            {
+              "CidrIp": "10.0.0.0/16"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "cloudtrail": [
+    {
+      "Name": "security-trail",
+      "IsLogging": true,
+      "LogFileValidationEnabled": true,
+      "MultiRegionTrail": true
+    }
+  ]
+}
