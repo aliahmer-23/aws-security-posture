@@ -37,7 +37,7 @@ class TestAssessmentCoverage(unittest.TestCase):
 
         self.assertEqual(
             coverage["complete"],
-            5,
+            6,
         )
 
         self.assertEqual(
@@ -233,7 +233,7 @@ class TestRDSCoverage(unittest.TestCase):
 
         self.assertEqual(
             coverage["services_assessed"],
-            5,
+            6,
         )
 
     def test_rds_collection_error_is_partial(self):
@@ -262,5 +262,95 @@ class TestRDSCoverage(unittest.TestCase):
 
         self.assertEqual(
             coverage["confidence"],
+            "PARTIAL",
+        )
+
+
+class TestKMSCoverage(unittest.TestCase):
+
+    def test_kms_complete_coverage(self):
+        environment = {
+            "iam": {
+                "collection_errors": [],
+            },
+            "s3": [],
+            "ec2_collection_errors": [],
+            "cloudtrail": [],
+            "rds": [],
+            "rds_collection_errors": [],
+            "kms": [],
+            "kms_collection_errors": [],
+        }
+
+        coverage = calculate_coverage(environment)
+
+        self.assertEqual(
+            coverage["services"]["kms"]["status"],
+            "COMPLETE",
+        )
+        self.assertEqual(
+            coverage["services_assessed"],
+            6,
+        )
+
+    def test_kms_collection_error_is_partial(self):
+        environment = {
+            "iam": {
+                "collection_errors": [],
+            },
+            "s3": [],
+            "ec2_collection_errors": [],
+            "cloudtrail": [],
+            "rds": [],
+            "rds_collection_errors": [],
+            "kms": [],
+            "kms_collection_errors": [
+                {
+                    "operation": "list_keys",
+                    "code": "AccessDenied",
+                }
+            ],
+        }
+
+        coverage = calculate_coverage(environment)
+
+        self.assertEqual(
+            coverage["services"]["kms"]["status"],
+            "PARTIAL",
+        )
+        self.assertEqual(
+            coverage["confidence"],
+            "PARTIAL",
+        )
+
+    def test_kms_key_detail_error_is_partial(self):
+        environment = {
+            "iam": {
+                "collection_errors": [],
+            },
+            "s3": [],
+            "ec2_collection_errors": [],
+            "cloudtrail": [],
+            "rds": [],
+            "rds_collection_errors": [],
+            "kms": [
+                {
+                    "collection_errors": [
+                        {
+                            "operation": (
+                                "get_key_rotation_status"
+                            ),
+                            "code": "AccessDenied",
+                        }
+                    ]
+                }
+            ],
+            "kms_collection_errors": [],
+        }
+
+        coverage = calculate_coverage(environment)
+
+        self.assertEqual(
+            coverage["services"]["kms"]["status"],
             "PARTIAL",
         )

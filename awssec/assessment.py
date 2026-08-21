@@ -6,6 +6,7 @@ from awssec.models import Finding
 from checks.cloudtrail import analyze_cloudtrail
 from checks.ec2 import analyze_security_groups
 from checks.iam import analyze_iam
+from checks.kms import analyze_kms
 from checks.rds import analyze_rds
 from checks.s3 import analyze_s3
 
@@ -57,6 +58,15 @@ def run_assessment(
         analyze_rds(
             environment.get(
                 "rds",
+                [],
+            )
+        )
+    )
+
+    findings.extend(
+        analyze_kms(
+            environment.get(
+                "kms",
                 [],
             )
         )

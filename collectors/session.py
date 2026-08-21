@@ -7,6 +7,7 @@ AWS_SERVICES = (
     "ec2",
     "cloudtrail",
     "rds",
+    "kms",
 )
 
 

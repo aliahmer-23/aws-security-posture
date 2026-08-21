@@ -162,6 +162,157 @@ class AWSCollector:
             "CollectionErrors": [],
         }
 
+
+    def collect_kms_keys(self) -> Dict[str, Any]:
+        """
+        Collect customer-visible KMS keys and rotation status
+        using read-only KMS APIs.
+
+        Collection failures are recorded separately so
+        incomplete permissions cannot be interpreted as a
+        secure configuration.
+        """
+
+        kms = self._client("kms")
+
+        keys = []
+        errors = []
+        marker = None
+
+        try:
+            while True:
+                kwargs = {}
+
+                if marker:
+                    kwargs["Marker"] = marker
+
+                response = kms.list_keys(**kwargs)
+
+                for key in response.get("Keys", []):
+                    key_id = key.get("KeyId")
+
+                    if not key_id:
+                        continue
+
+                    record = {
+                        "KeyId": key_id,
+                        "KeyArn": key.get("KeyArn"),
+                        "KeyMetadata": None,
+                        "RotationEnabled": None,
+                        "CollectionErrors": [],
+                    }
+
+                    try:
+                        description = kms.describe_key(
+                            KeyId=key_id
+                        )
+
+                        record["KeyMetadata"] = (
+                            description.get(
+                                "KeyMetadata",
+                                {},
+                            )
+                        )
+
+                    except ClientError as exc:
+                        error = exc.response.get(
+                            "Error",
+                            {},
+                        )
+
+                        record["CollectionErrors"].append(
+                            {
+                                "operation": "describe_key",
+                                "code": error.get(
+                                    "Code",
+                                    "Unknown",
+                                ),
+                            }
+                        )
+
+                    metadata = (
+                        record.get("KeyMetadata") or {}
+                    )
+
+                    manager = metadata.get("KeyManager")
+                    state = metadata.get("KeyState")
+                    key_spec = metadata.get("KeySpec")
+
+                    rotation_supported = (
+                        manager == "CUSTOMER"
+                        and state == "Enabled"
+                        and key_spec
+                        in (
+                            None,
+                            "SYMMETRIC_DEFAULT",
+                        )
+                    )
+
+                    if rotation_supported:
+                        try:
+                            rotation = (
+                                kms.get_key_rotation_status(
+                                    KeyId=key_id
+                                )
+                            )
+
+                            record["RotationEnabled"] = (
+                                rotation.get(
+                                    "KeyRotationEnabled"
+                                )
+                            )
+
+                        except ClientError as exc:
+                            error = exc.response.get(
+                                "Error",
+                                {},
+                            )
+
+                            record[
+                                "CollectionErrors"
+                            ].append(
+                                {
+                                    "operation": (
+                                        "get_key_rotation_status"
+                                    ),
+                                    "code": error.get(
+                                        "Code",
+                                        "Unknown",
+                                    ),
+                                }
+                            )
+
+                    keys.append(record)
+
+                marker = response.get("NextMarker")
+
+                if not response.get("Truncated"):
+                    break
+
+                if not marker:
+                    break
+
+        except ClientError as exc:
+            error = exc.response.get(
+                "Error",
+                {},
+            )
+
+            errors.append(
+                {
+                    "operation": "list_keys",
+                    "code": error.get(
+                        "Code",
+                        "Unknown",
+                    ),
+                }
+            )
+
+        return {
+            "Keys": keys,
+            "CollectionErrors": errors,
+        }
+
     def collect_trails(self) -> Dict[str, Any]:
         cloudtrail = self._client("cloudtrail")
         return cloudtrail.describe_trails(

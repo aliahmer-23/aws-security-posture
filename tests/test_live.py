@@ -16,6 +16,7 @@ class TestLiveAssessment(unittest.TestCase):
         ec2 = MagicMock()
         cloudtrail = MagicMock()
         rds = MagicMock()
+        kms = MagicMock()
 
         create_clients.return_value = {
             "iam": iam,
@@ -23,6 +24,7 @@ class TestLiveAssessment(unittest.TestCase):
             "ec2": ec2,
             "cloudtrail": cloudtrail,
             "rds": rds,
+            "kms": kms,
         }
 
         iam.list_users.return_value = {
@@ -65,6 +67,11 @@ class TestLiveAssessment(unittest.TestCase):
             "DBInstances": []
         }
 
+        kms.list_keys.return_value = {
+            "Keys": [],
+            "Truncated": False,
+        }
+
         result = run_live_assessment(
             region="us-east-1"
         )
@@ -78,6 +85,7 @@ class TestLiveAssessment(unittest.TestCase):
         s3.list_buckets.assert_called_once_with()
         ec2.describe_security_groups.assert_called_once_with()
         rds.describe_db_instances.assert_called_once_with()
+        kms.list_keys.assert_called_once_with()
 
         cloudtrail.describe_trails.assert_called_once_with(
             includeShadowTrails=False
@@ -96,6 +104,7 @@ class TestLiveAssessment(unittest.TestCase):
         ec2 = MagicMock()
         cloudtrail = MagicMock()
         rds = MagicMock()
+        kms = MagicMock()
 
         create_clients.return_value = {
             "iam": iam,
@@ -103,6 +112,7 @@ class TestLiveAssessment(unittest.TestCase):
             "ec2": ec2,
             "cloudtrail": cloudtrail,
             "rds": rds,
+            "kms": kms,
         }
 
         iam.list_users.return_value = {
@@ -134,6 +144,11 @@ class TestLiveAssessment(unittest.TestCase):
 
         rds.describe_db_instances.return_value = {
             "DBInstances": []
+        }
+
+        kms.list_keys.return_value = {
+            "Keys": [],
+            "Truncated": False,
         }
 
         run_live_assessment(

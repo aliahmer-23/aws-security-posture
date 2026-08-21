@@ -141,6 +141,7 @@ th { background: #f3f3f3; }
         "ec2",
         "cloudtrail",
         "rds",
+        "kms",
     ):
         status = services[service]["status"]
 

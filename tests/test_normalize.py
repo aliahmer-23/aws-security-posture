@@ -4,6 +4,7 @@ from collectors.normalize import (
     normalize_cloudtrail,
     normalize_environment,
     normalize_iam,
+    normalize_kms,
     normalize_rds,
     normalize_s3,
     normalize_security_groups,
@@ -151,6 +152,7 @@ class TestAWSNormalization(unittest.TestCase):
                 "security_groups",
                 "cloudtrail",
                 "rds",
+                "kms",
             },
         )
 
@@ -192,4 +194,49 @@ class TestRDSNormalization(unittest.TestCase):
         )
         self.assertTrue(
             result[0]["DeletionProtection"]
+        )
+
+
+class TestKMSNormalization(unittest.TestCase):
+
+    def test_kms_security_properties_normalized(self):
+        response = {
+            "Keys": [
+                {
+                    "KeyId": "key-123",
+                    "KeyArn": "arn:test:key-123",
+                    "KeyMetadata": {
+                        "Arn": "arn:test:key-123",
+                        "KeyManager": "CUSTOMER",
+                        "KeyState": "Enabled",
+                        "KeySpec": "SYMMETRIC_DEFAULT",
+                        "Origin": "AWS_KMS",
+                        "MultiRegion": False,
+                    },
+                    "RotationEnabled": True,
+                    "CollectionErrors": [],
+                }
+            ]
+        }
+
+        result = normalize_kms(response)
+
+        self.assertEqual(
+            result[0]["KeyId"],
+            "key-123",
+        )
+        self.assertEqual(
+            result[0]["KeyManager"],
+            "CUSTOMER",
+        )
+        self.assertEqual(
+            result[0]["KeyState"],
+            "Enabled",
+        )
+        self.assertTrue(
+            result[0]["RotationEnabled"]
+        )
+        self.assertEqual(
+            result[0]["collection_errors"],
+            [],
         )

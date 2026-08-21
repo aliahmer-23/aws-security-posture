@@ -388,3 +388,170 @@ class TestRDSCollection(unittest.TestCase):
             result["CollectionErrors"][0]["code"],
             "AccessDenied",
         )
+
+
+class TestKMSCollection(unittest.TestCase):
+
+    def test_kms_key_collected(self):
+        kms = MagicMock()
+
+        kms.list_keys.return_value = {
+            "Keys": [
+                {
+                    "KeyId": "key-123",
+                    "KeyArn": "arn:test:key-123",
+                }
+            ],
+            "Truncated": False,
+        }
+
+        kms.describe_key.return_value = {
+            "KeyMetadata": {
+                "KeyId": "key-123",
+                "Arn": "arn:test:key-123",
+                "KeyManager": "CUSTOMER",
+                "KeyState": "Enabled",
+                "KeySpec": "SYMMETRIC_DEFAULT",
+            }
+        }
+
+        kms.get_key_rotation_status.return_value = {
+            "KeyRotationEnabled": True
+        }
+
+        collector = AWSCollector(
+            {
+                "kms": kms,
+            }
+        )
+
+        result = collector.collect_kms_keys()
+
+        self.assertEqual(
+            len(result["Keys"]),
+            1,
+        )
+        self.assertEqual(
+            result["Keys"][0]["KeyId"],
+            "key-123",
+        )
+        self.assertTrue(
+            result["Keys"][0]["RotationEnabled"]
+        )
+
+    def test_kms_pagination(self):
+        kms = MagicMock()
+
+        kms.list_keys.side_effect = [
+            {
+                "Keys": [],
+                "Truncated": True,
+                "NextMarker": "page-two",
+            },
+            {
+                "Keys": [],
+                "Truncated": False,
+            },
+        ]
+
+        collector = AWSCollector(
+            {
+                "kms": kms,
+            }
+        )
+
+        result = collector.collect_kms_keys()
+
+        self.assertEqual(
+            result["CollectionErrors"],
+            [],
+        )
+
+        kms.list_keys.assert_any_call()
+        kms.list_keys.assert_any_call(
+            Marker="page-two"
+        )
+
+    def test_kms_list_access_denied_recorded(self):
+        from botocore.exceptions import ClientError
+
+        kms = MagicMock()
+
+        kms.list_keys.side_effect = ClientError(
+            {
+                "Error": {
+                    "Code": "AccessDenied",
+                    "Message": "Denied",
+                }
+            },
+            "ListKeys",
+        )
+
+        collector = AWSCollector(
+            {
+                "kms": kms,
+            }
+        )
+
+        result = collector.collect_kms_keys()
+
+        self.assertEqual(
+            result["Keys"],
+            [],
+        )
+        self.assertEqual(
+            result["CollectionErrors"][0]["code"],
+            "AccessDenied",
+        )
+
+    def test_kms_rotation_access_denied_preserved(self):
+        from botocore.exceptions import ClientError
+
+        kms = MagicMock()
+
+        kms.list_keys.return_value = {
+            "Keys": [
+                {
+                    "KeyId": "key-123",
+                }
+            ],
+            "Truncated": False,
+        }
+
+        kms.describe_key.return_value = {
+            "KeyMetadata": {
+                "KeyManager": "CUSTOMER",
+                "KeyState": "Enabled",
+                "KeySpec": "SYMMETRIC_DEFAULT",
+            }
+        }
+
+        kms.get_key_rotation_status.side_effect = (
+            ClientError(
+                {
+                    "Error": {
+                        "Code": "AccessDenied",
+                        "Message": "Denied",
+                    }
+                },
+                "GetKeyRotationStatus",
+            )
+        )
+
+        collector = AWSCollector(
+            {
+                "kms": kms,
+            }
+        )
+
+        result = collector.collect_kms_keys()
+
+        self.assertIsNone(
+            result["Keys"][0]["RotationEnabled"]
+        )
+        self.assertEqual(
+            result["Keys"][0][
+                "CollectionErrors"
+            ][0]["code"],
+            "AccessDenied",
+        )

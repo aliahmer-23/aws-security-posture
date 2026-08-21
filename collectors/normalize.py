@@ -152,12 +152,64 @@ def normalize_rds(
     return instances
 
 
+
+def normalize_kms(
+    response: Dict[str, Any],
+) -> List[Dict[str, Any]]:
+    """Normalize KMS key security properties."""
+
+    keys = []
+
+    for key in response.get("Keys", []):
+        metadata = key.get("KeyMetadata") or {}
+
+        keys.append(
+            {
+                "KeyId": key.get(
+                    "KeyId",
+                    "unknown",
+                ),
+                "Arn": metadata.get(
+                    "Arn",
+                    key.get("KeyArn"),
+                ),
+                "KeyManager": metadata.get(
+                    "KeyManager"
+                ),
+                "KeyState": metadata.get(
+                    "KeyState"
+                ),
+                "KeySpec": metadata.get(
+                    "KeySpec"
+                ),
+                "Origin": metadata.get(
+                    "Origin"
+                ),
+                "MultiRegion": metadata.get(
+                    "MultiRegion"
+                ),
+                "RotationEnabled": key.get(
+                    "RotationEnabled"
+                ),
+                "collection_errors": list(
+                    key.get(
+                        "CollectionErrors",
+                        [],
+                    )
+                ),
+            }
+        )
+
+    return keys
+
+
 def normalize_environment(
     account_summary: Dict[str, Any],
     buckets: Dict[str, Any],
     security_groups: Dict[str, Any],
     trails: Dict[str, Any],
     rds_instances: Dict[str, Any] = None,
+    kms_keys: Dict[str, Any] = None,
 ) -> Dict[str, Any]:
     """
     Build the normalized AWS environment document consumed
@@ -180,6 +232,11 @@ def normalize_environment(
         "rds": normalize_rds(
             rds_instances or {
                 "DBInstances": []
+            }
+        ),
+        "kms": normalize_kms(
+            kms_keys or {
+                "Keys": []
             }
         ),
     }
