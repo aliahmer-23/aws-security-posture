@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional
 from awssec.assessment import run_assessment
 from collectors.aws import AWSCollector
 from collectors.normalize import normalize_environment
+from collectors.s3_details import collect_s3_security_details
 from collectors.session import create_aws_clients
 
 
@@ -22,11 +23,21 @@ def run_live_assessment(
 
     collector = AWSCollector(clients)
 
+    account_summary = collector.collect_account_summary()
+    bucket_inventory = collector.collect_s3_buckets()
+    security_groups = collector.collect_security_groups()
+    trails = collector.collect_trails()
+
     environment = normalize_environment(
-        account_summary=collector.collect_account_summary(),
-        buckets=collector.collect_s3_buckets(),
-        security_groups=collector.collect_security_groups(),
-        trails=collector.collect_trails(),
+        account_summary=account_summary,
+        buckets=bucket_inventory,
+        security_groups=security_groups,
+        trails=trails,
+    )
+
+    environment["s3"] = collect_s3_security_details(
+        clients["s3"],
+        bucket_inventory,
     )
 
     return run_assessment(environment)

@@ -12,6 +12,17 @@ def analyze_s3_bucket(
     name = bucket.get("name", "unknown-bucket")
     resource = f"s3://{name}"
 
+    collection_errors = bucket.get(
+        "collection_errors",
+        [],
+    )
+
+    failed_operations = {
+        error.get("operation")
+        for error in collection_errors
+        if error.get("operation")
+    }
+
     public_access = bucket.get(
         "public_access_block",
         {},
@@ -24,11 +35,14 @@ def analyze_s3_bucket(
         "RestrictPublicBuckets",
     )
 
-    disabled_controls = [
-        control
-        for control in required_public_controls
-        if public_access.get(control) is not True
-    ]
+    disabled_controls = []
+
+    if "get_public_access_block" not in failed_operations:
+        disabled_controls = [
+            control
+            for control in required_public_controls
+            if public_access.get(control) is not True
+        ]
 
     if disabled_controls:
         findings.append(
@@ -54,7 +68,10 @@ def analyze_s3_bucket(
 
     encryption = bucket.get("encryption")
 
-    if not encryption:
+    if (
+        "get_bucket_encryption" not in failed_operations
+        and not encryption
+    ):
         findings.append(
             Finding(
                 id="ASP-S3-002",
@@ -78,7 +95,10 @@ def analyze_s3_bucket(
 
     versioning = bucket.get("versioning")
 
-    if versioning != "Enabled":
+    if (
+        "get_bucket_versioning" not in failed_operations
+        and versioning != "Enabled"
+    ):
         findings.append(
             Finding(
                 id="ASP-S3-003",

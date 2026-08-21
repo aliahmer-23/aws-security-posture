@@ -136,3 +136,102 @@ class TestS3Security(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestS3CollectionErrors(unittest.TestCase):
+
+    def test_public_access_denied_does_not_create_false_finding(self):
+        bucket = {
+            "name": "restricted-data",
+            "public_access_block": None,
+            "encryption": {
+                "algorithm": "AES256",
+            },
+            "versioning": "Enabled",
+            "collection_errors": [
+                {
+                    "operation": "get_public_access_block",
+                    "code": "AccessDenied",
+                }
+            ],
+        }
+
+        findings = analyze_s3_bucket(bucket)
+
+        ids = {finding.id for finding in findings}
+
+        self.assertNotIn("ASP-S3-001", ids)
+
+    def test_encryption_access_denied_does_not_create_false_finding(self):
+        bucket = {
+            "name": "restricted-data",
+            "public_access_block": {
+                "BlockPublicAcls": True,
+                "IgnorePublicAcls": True,
+                "BlockPublicPolicy": True,
+                "RestrictPublicBuckets": True,
+            },
+            "encryption": None,
+            "versioning": "Enabled",
+            "collection_errors": [
+                {
+                    "operation": "get_bucket_encryption",
+                    "code": "AccessDenied",
+                }
+            ],
+        }
+
+        findings = analyze_s3_bucket(bucket)
+
+        ids = {finding.id for finding in findings}
+
+        self.assertNotIn("ASP-S3-002", ids)
+
+    def test_versioning_access_denied_does_not_create_false_finding(self):
+        bucket = {
+            "name": "restricted-data",
+            "public_access_block": {
+                "BlockPublicAcls": True,
+                "IgnorePublicAcls": True,
+                "BlockPublicPolicy": True,
+                "RestrictPublicBuckets": True,
+            },
+            "encryption": {
+                "algorithm": "AES256",
+            },
+            "versioning": None,
+            "collection_errors": [
+                {
+                    "operation": "get_bucket_versioning",
+                    "code": "AccessDenied",
+                }
+            ],
+        }
+
+        findings = analyze_s3_bucket(bucket)
+
+        ids = {finding.id for finding in findings}
+
+        self.assertNotIn("ASP-S3-003", ids)
+
+    def test_other_checks_still_run_after_one_collection_failure(self):
+        bucket = {
+            "name": "partially-visible-data",
+            "public_access_block": None,
+            "encryption": None,
+            "versioning": "Suspended",
+            "collection_errors": [
+                {
+                    "operation": "get_public_access_block",
+                    "code": "AccessDenied",
+                }
+            ],
+        }
+
+        findings = analyze_s3_bucket(bucket)
+
+        ids = {finding.id for finding in findings}
+
+        self.assertNotIn("ASP-S3-001", ids)
+        self.assertIn("ASP-S3-002", ids)
+        self.assertIn("ASP-S3-003", ids)
