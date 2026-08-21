@@ -166,6 +166,26 @@ class TestHTMLReporting(unittest.TestCase):
                 text,
             )
 
+    def test_html_contains_actionable_remediation(self):
+        from reporting.reports import write_html_report
+
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "report.html"
+
+            write_html_report(
+                self.assessment,
+                path,
+            )
+
+            text = path.read_text(
+                encoding="utf-8"
+            )
+
+            self.assertIn(
+                "least-privilege IAM roles or identities",
+                text,
+            )
+
     def test_html_contains_finding(self):
         from reporting.reports import write_html_report
         with tempfile.TemporaryDirectory() as temp:

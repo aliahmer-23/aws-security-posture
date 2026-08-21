@@ -57,8 +57,9 @@ def analyze_s3_bucket(
                     "protection controls are disabled."
                 ),
                 recommendation=(
-                    "Enable all S3 Block Public Access "
-                    "controls for the bucket."
+                    "Enable all four S3 Block Public Access settings "
+                    "for the bucket unless public access is explicitly "
+                    "required and documented."
                 ),
                 evidence={
                     "disabled_controls": disabled_controls,
@@ -84,8 +85,9 @@ def analyze_s3_bucket(
                     "was detected."
                 ),
                 recommendation=(
-                    "Configure server-side encryption "
-                    "for the S3 bucket."
+                    "Configure default server-side encryption for the "
+                    "bucket using an encryption option appropriate "
+                    "for the workload and key-management requirements."
                 ),
                 evidence={
                     "encryption": encryption,
@@ -110,8 +112,9 @@ def analyze_s3_bucket(
                     "Bucket versioning is not enabled."
                 ),
                 recommendation=(
-                    "Enable S3 versioning where recovery "
-                    "and object history are required."
+                    "Enable S3 Versioning where object recovery and "
+                    "change history are required, and consider lifecycle "
+                    "rules for older object versions."
                 ),
                 evidence={
                     "versioning": versioning,

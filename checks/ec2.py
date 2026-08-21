@@ -86,8 +86,9 @@ def analyze_security_group(
                         "inbound access to TCP port 22."
                     ),
                     recommendation=(
-                        "Restrict SSH access to approved "
-                        "administrative networks."
+                        "Remove unrestricted SSH ingress and restrict TCP "
+                        "port 22 to explicitly approved administrative "
+                        "CIDR ranges or controlled management paths."
                     ),
                     evidence={
                         "port": 22,
@@ -109,8 +110,9 @@ def analyze_security_group(
                         "inbound access to TCP port 3389."
                     ),
                     recommendation=(
-                        "Restrict RDP access to approved "
-                        "administrative networks."
+                        "Remove unrestricted RDP ingress and restrict TCP "
+                        "port 3389 to explicitly approved administrative "
+                        "CIDR ranges or controlled management paths."
                     ),
                     evidence={
                         "port": 3389,
@@ -132,8 +134,9 @@ def analyze_security_group(
                         "protocols from a public CIDR."
                     ),
                     recommendation=(
-                        "Replace unrestricted inbound "
-                        "access with least-privilege rules."
+                        "Remove the all-protocol public ingress rule and "
+                        "replace it with only the protocols, ports, and "
+                        "source ranges required by the workload."
                     ),
                     evidence={
                         "protocol": "-1",

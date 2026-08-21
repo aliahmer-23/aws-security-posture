@@ -24,8 +24,9 @@ def analyze_iam(
                     "access key."
                 ),
                 recommendation=(
-                    "Remove root access keys and use "
-                    "least-privilege IAM identities instead."
+                    "Delete root account access keys, avoid using the "
+                    "root user for routine administration, and use "
+                    "least-privilege IAM roles or identities instead."
                 ),
                 evidence={
                     "root_access_keys":
@@ -47,7 +48,9 @@ def analyze_iam(
                     "enabled for the root account."
                 ),
                 recommendation=(
-                    "Enable MFA for the AWS root account."
+                    "Enable MFA for the AWS root user and securely "
+                    "protect the MFA device used for account recovery "
+                    "and privileged access."
                 ),
                 evidence={
                     "root_mfa_enabled": False,

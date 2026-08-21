@@ -22,8 +22,9 @@ def analyze_cloudtrail(
                     "for the assessed account."
                 ),
                 recommendation=(
-                    "Configure CloudTrail to record "
-                    "AWS account activity."
+                    "Create and enable a CloudTrail trail that records "
+                    "required account activity, and protect the "
+                    "destination used to retain audit logs."
                 ),
                 evidence={
                     "trail_count": 0,
@@ -67,8 +68,9 @@ def analyze_cloudtrail(
                         "actively logging."
                     ),
                     recommendation=(
-                        "Enable logging for the "
-                        "CloudTrail trail."
+                        "Start logging for the CloudTrail trail and verify "
+                        "that events are being delivered to the "
+                        "configured log destination."
                     ),
                     evidence={
                         "is_logging": False,
@@ -92,8 +94,8 @@ def analyze_cloudtrail(
                         "validation is disabled."
                     ),
                     recommendation=(
-                        "Enable CloudTrail log-file "
-                        "validation."
+                        "Enable CloudTrail log-file validation so changes "
+                        "to delivered log files can be detected."
                     ),
                     evidence={
                         "log_file_validation": False,
@@ -114,8 +116,9 @@ def analyze_cloudtrail(
                         "as a multi-region trail."
                     ),
                     recommendation=(
-                        "Use a multi-region trail to "
-                        "improve account-wide visibility."
+                        "Configure an appropriate multi-Region CloudTrail "
+                        "trail to improve visibility across enabled "
+                        "AWS Regions."
                     ),
                     evidence={
                         "multi_region": False,
