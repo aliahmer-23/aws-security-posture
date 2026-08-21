@@ -141,6 +141,31 @@ class TestHTMLReporting(unittest.TestCase):
             self.assertIn("IAM.4", text)
             self.assertIn("DIRECT", text)
 
+    def test_html_contains_finding_evidence(self):
+        from reporting.reports import write_html_report
+
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "report.html"
+
+            write_html_report(
+                self.assessment,
+                path,
+            )
+
+            text = path.read_text(
+                encoding="utf-8"
+            )
+
+            self.assertIn("Evidence", text)
+            self.assertIn(
+                "Root Access Keys:",
+                text,
+            )
+            self.assertIn(
+                "<strong>Root Access Keys:</strong> 1",
+                text,
+            )
+
     def test_html_contains_finding(self):
         from reporting.reports import write_html_report
         with tempfile.TemporaryDirectory() as temp:

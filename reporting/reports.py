@@ -53,6 +53,32 @@ def write_html_report(assessment: Dict[str, Any], path: Path) -> Path:
             else "—"
         )
 
+        evidence_items = []
+
+        for key, value in data.get("evidence", {}).items():
+            label = key.replace("_", " ").title()
+
+            if isinstance(value, list):
+                rendered_value = ", ".join(
+                    str(item)
+                    for item in value
+                )
+            elif value is None:
+                rendered_value = "Not configured"
+            else:
+                rendered_value = str(value)
+
+            evidence_items.append(
+                f"<strong>{html.escape(label)}:</strong> "
+                f"{html.escape(rendered_value)}"
+            )
+
+        evidence_text = (
+            "<br>".join(evidence_items)
+            if evidence_items
+            else "—"
+        )
+
         rows.append(
             "<tr>"
             f"<td>{html.escape(data['id'])}</td>"
@@ -60,13 +86,14 @@ def write_html_report(assessment: Dict[str, Any], path: Path) -> Path:
             f"<td>{html.escape(data['service'])}</td>"
             f"<td>{html.escape(data['resource'])}</td>"
             f"<td>{html.escape(data['title'])}</td>"
+            f"<td>{evidence_text}</td>"
             f"<td>{compliance_text}</td>"
             f"<td>{html.escape(data['recommendation'])}</td>"
             "</tr>"
         )
 
     if not rows:
-        rows.append("<tr><td colspan=\"7\">No security findings detected.</td></tr>")
+        rows.append("<tr><td colspan=\"8\">No security findings detected.</td></tr>")
 
     content = """<!doctype html>
 <html lang="en">
@@ -155,6 +182,7 @@ th { background: #f3f3f3; }
 <th>Service</th>
 <th>Resource</th>
 <th>Finding</th>
+<th>Evidence</th>
 <th>Compliance</th>
 <th>Recommendation</th>
 </tr>
