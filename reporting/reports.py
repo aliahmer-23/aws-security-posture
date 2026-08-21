@@ -11,6 +11,7 @@ def write_json_report(
 
     document = {
         "risk": assessment["risk"],
+        "coverage": assessment["coverage"],
         "findings": [
             finding.to_dict()
             for finding in assessment["findings"]
@@ -74,6 +75,59 @@ th { background: #f3f3f3; }
     content += f"<p><strong>High:</strong> {risk['high']}</p>"
     content += f"<p><strong>Medium:</strong> {risk['medium']}</p>"
     content += f"<p><strong>Low:</strong> {risk['low']}</p>"
+
+    coverage = assessment["coverage"]
+    services = coverage["services"]
+
+    content += """
+<h2>Assessment Coverage</h2>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+"""
+
+    for service in ("iam", "s3", "ec2", "cloudtrail"):
+        status = services[service]["status"]
+
+        content += (
+            "<tr>"
+            f"<td>{html.escape(service.upper())}</td>"
+            f"<td>{html.escape(str(status))}</td>"
+            "</tr>"
+        )
+
+    content += "</tbody></table>"
+
+    content += (
+        "<p><strong>Services assessed:</strong> "
+        f"{coverage['services_assessed']}</p>"
+    )
+    content += (
+        "<p><strong>Complete:</strong> "
+        f"{coverage['complete']}</p>"
+    )
+    content += (
+        "<p><strong>Partial:</strong> "
+        f"{coverage['partial']}</p>"
+    )
+    content += (
+        "<p><strong>Failed:</strong> "
+        f"{coverage['failed']}</p>"
+    )
+    content += (
+        "<p><strong>Collection errors:</strong> "
+        f"{coverage['collection_errors']}</p>"
+    )
+    content += (
+        "<p><strong>Assessment confidence:</strong> "
+        f"{html.escape(str(coverage['confidence']))}</p>"
+    )
+
     content += """
 <h2>Security Findings</h2>
 <table>

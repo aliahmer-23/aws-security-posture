@@ -32,6 +32,31 @@ class TestCLI(unittest.TestCase):
             result.stdout,
         )
 
+    def test_secure_fixture_shows_coverage(self):
+        result = self.run_cli(
+            "fixtures/secure.json"
+        )
+
+        self.assertEqual(
+            result.returncode,
+            0,
+        )
+
+        self.assertIn(
+            "ASSESSMENT COVERAGE",
+            result.stdout,
+        )
+
+        self.assertIn(
+            "Assessment confidence: COMPLETE",
+            result.stdout,
+        )
+
+        self.assertIn(
+            "Collection errors:     0",
+            result.stdout,
+        )
+
     def test_insecure_fixture_fails(self):
         result = self.run_cli(
             "fixtures/insecure.json"

@@ -162,3 +162,92 @@ class TestSARIFReporting(unittest.TestCase):
             self.assertTrue(path.is_file())
             document = json.loads(path.read_text(encoding="utf-8"))
             self.assertEqual(document["version"], "2.1.0")
+
+
+class TestCoverageReporting(unittest.TestCase):
+
+    def setUp(self):
+        self.environment = {
+            "iam": {
+                "root_access_keys": 0,
+                "root_mfa_enabled": True,
+                "unused_access_keys": 0,
+                "admin_users": 1,
+                "password_policy": {
+                    "minimum_length": 14,
+                },
+                "collection_errors": [],
+            },
+            "s3": [],
+            "security_groups": [],
+            "ec2_collection_errors": [],
+            "cloudtrail": [],
+        }
+
+        self.assessment = run_assessment(
+            self.environment
+        )
+
+    def test_json_contains_coverage(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "report.json"
+
+            write_json_report(
+                self.assessment,
+                path,
+            )
+
+            document = json.loads(
+                path.read_text(
+                    encoding="utf-8"
+                )
+            )
+
+            self.assertIn(
+                "coverage",
+                document,
+            )
+
+            self.assertEqual(
+                document["coverage"]["confidence"],
+                "COMPLETE",
+            )
+
+            self.assertEqual(
+                document["coverage"][
+                    "services"
+                ]["iam"]["status"],
+                "COMPLETE",
+            )
+
+    def test_html_contains_coverage(self):
+        from reporting.reports import (
+            write_html_report,
+        )
+
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "report.html"
+
+            write_html_report(
+                self.assessment,
+                path,
+            )
+
+            text = path.read_text(
+                encoding="utf-8"
+            )
+
+            self.assertIn(
+                "Assessment Coverage",
+                text,
+            )
+
+            self.assertIn(
+                "Assessment confidence:",
+                text,
+            )
+
+            self.assertIn(
+                "Collection errors:",
+                text,
+            )

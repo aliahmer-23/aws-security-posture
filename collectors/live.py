@@ -37,6 +37,13 @@ def run_live_assessment(
         trails=trails,
     )
 
+    environment["ec2_collection_errors"] = (
+        security_groups.get(
+            "CollectionErrors",
+            [],
+        )
+    )
+
     environment["iam"] = collect_iam_security_details(
         clients["iam"],
         account_summary,

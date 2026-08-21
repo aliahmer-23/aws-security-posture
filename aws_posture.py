@@ -67,6 +67,33 @@ def print_risk(summary):
     print(f"Overall risk:     {summary['overall_risk']}")
 
 
+def print_coverage(coverage):
+    print()
+    print("ASSESSMENT COVERAGE")
+    print("-" * 60)
+
+    labels = {
+        "iam": "IAM",
+        "s3": "S3",
+        "ec2": "EC2",
+        "cloudtrail": "CloudTrail",
+    }
+
+    for service, label in labels.items():
+        details = coverage["services"][service]
+        print(f"{label + ':':<16}{details['status']}")
+
+    print()
+    print(
+        f"Collection errors:     "
+        f"{coverage['collection_errors']}"
+    )
+    print(
+        f"Assessment confidence: "
+        f"{coverage['confidence']}"
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=(
@@ -157,6 +184,10 @@ def main():
 
     print_risk(
         assessment["risk"]
+    )
+
+    print_coverage(
+        assessment["coverage"]
     )
 
     report_dir = Path("reports")

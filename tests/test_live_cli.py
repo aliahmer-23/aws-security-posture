@@ -6,7 +6,33 @@ import aws_posture
 
 
 SECURE_ASSESSMENT = {
-    "findings": [],
+    "coverage": {
+                "services": {
+                    "iam": {
+                        "status": "COMPLETE",
+                        "collection_errors": [],
+                    },
+                    "s3": {
+                        "status": "COMPLETE",
+                        "collection_errors": [],
+                    },
+                    "ec2": {
+                        "status": "COMPLETE",
+                        "collection_errors": [],
+                    },
+                    "cloudtrail": {
+                        "status": "COMPLETE",
+                        "collection_errors": [],
+                    },
+                },
+                "services_assessed": 4,
+                "complete": 4,
+                "partial": 0,
+                "failed": 0,
+                "collection_errors": 0,
+                "confidence": "COMPLETE",
+            },
+            "findings": [],
     "risk": {
         "risk_score": 0,
         "raw_risk_score": 0,

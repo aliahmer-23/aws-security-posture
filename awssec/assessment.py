@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 
+from awssec.coverage import calculate_coverage
 from awssec.engine import calculate_risk
 from awssec.models import Finding
 from checks.cloudtrail import analyze_cloudtrail
@@ -52,10 +53,12 @@ def run_assessment(
     )
 
     risk = calculate_risk(findings)
+    coverage = calculate_coverage(environment)
 
     return {
         "findings": findings,
         "risk": risk,
+        "coverage": coverage,
     }
 
 
@@ -65,6 +68,7 @@ def serialize_assessment(
 
     return {
         "risk": assessment["risk"],
+        "coverage": assessment["coverage"],
         "findings": [
             finding.to_dict()
             for finding in assessment["findings"]
